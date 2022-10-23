@@ -5,7 +5,7 @@ import keyboard
 
 episodes = 1
 models_dir = 'models/DQN'
-model_path = f"{models_dir}/2660000.zip"
+model_path = f"{models_dir}/Bueno_fondo.zip"
 
 env = CustomEnv(205)
 model = DQN.load(model_path, env)
