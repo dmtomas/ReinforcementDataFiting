@@ -4,17 +4,17 @@ import gym
 from gym import spaces
 
 def Ajustar(b, t):
-    return b[0] + np.e**(t * b[1])
+    return b[1] * np.e**(-t * b[0]) * np.cos(b[2] * np.sqrt(t) + b[3])
 
 def Reward(a, b, action, inicial):
-    ans = inicial - (b - a)**2
+    ans = (b - a)**2 / b
     if action == 0 and b < a:
         ans *= -1
     elif action == 1 and b > a:
         ans *= -1
-    else:
+    elif action == 2:
         ans = 0
-    return ans
+    return ans * 10
 
 
 class CustomEnv(gym.Env):
@@ -30,20 +30,23 @@ class CustomEnv(gym.Env):
 
     def reset(self):
         self.done = False
-        self.buscado = [0.5, 0.5]
-        self.intervalos = [[0, 1], [0, 1]]
-        self.tiempo = np.linspace(0, 10, 200)
-        self.delta = 0.1
+        self.buscado = [0.5, 0.5, 0.5, 0.5]
+        self.intervalos = [[1, 2], [1, 2], [10, 20], [1, 2]]
+        for i in range(0, len(self.buscado)):
+            self.buscado[i] = np.random.uniform(self.intervalos[i][0], self.intervalos[i][1])
+        print(self.buscado)
+        self.tiempo = np.linspace(0, 5, 200)
+        self.delta = 0.01
 
-        self.actual = [(self.intervalos[i][1] - self.intervalos[i][0]) / 2 for i in range(len(self.intervalos))]
+        self.actual = [(self.intervalos[i][1] - self.intervalos[i][0]) / 2 + self.intervalos[i][0] for i in range(len(self.intervalos))]
         self.inicial = [(self.actual[i] - self.buscado[i])** 2 for i in range(len(self.intervalos))]
-
         self.steps = 0
         for i in range(0, len(self.actual)):
-            self.steps += self.actual[i] * 2 / self.delta
+            #self.steps += self.actual[i] * 2 / self.delta
+            self.steps = 5000
         self.variable = 0
-        self.resultado = Ajustar(self.actual, self.tiempo)
-        self.observation = np.array([self.actual, self.resultado])
+        self.resultado = np.random.normal(Ajustar(self.buscado, self.tiempo), np.abs(Ajustar(self.buscado, self.tiempo)*0.1))
+        self.observation = np.array([self.variable] + list(self.actual) + list(self.resultado))
         return self.observation # Esta es la observación.
 
 
@@ -65,7 +68,7 @@ class CustomEnv(gym.Env):
             self.actual[self.variable] -= self.delta
         
         self.reward = Reward(self.actual[self.variable], self.buscado[self.variable], action, self.inicial[self.variable])
-        self.observation = np.array([self.actual, self.resultado])
+        self.observation = np.array([self.variable] + list(self.actual) + list(self.resultado))
         info = {}
         return self.observation, self.reward, self.done, info
 
@@ -74,8 +77,9 @@ class CustomEnv(gym.Env):
         plt.clf()
         plt.plot(self.tiempo, self.resultado, label="Buscado")
         plt.plot(self.tiempo, self.vals, label="Resultado Actual")
+        plt.plot(self.tiempo, self.resultado - self.vals, label="Error", linestyle="--", color="green")
         plt.legend()
-        plt.pause(0.01)
+        plt.pause(0.001) # Son 60fps.
         return 0
 
 if __name__=="__main__":

@@ -1,7 +1,7 @@
 from stable_baselines3.common.env_checker import check_env
 from enviroment import CustomEnv
 
-env = CustomEnv(202)
+env = CustomEnv(203)
 episodes = 50
 
 for episode in range(episodes):
