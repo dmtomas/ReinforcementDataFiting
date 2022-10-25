@@ -18,7 +18,7 @@ def Reward(a, b, action, inicial):
 
 
 class CustomEnv(gym.Env):
-    def __init__(self, N_CHANNELS):
+    def __init__(self, N_CHANNELS, intervalos, tiempo, entrenamiento):
         super(CustomEnv, self).__init__()
         # Define action and observation space
         # They must be gym.spaces objects
@@ -27,23 +27,24 @@ class CustomEnv(gym.Env):
         # Example for using image as input (channel-first; channel-last also works):
         self.observation_space = spaces.Box(low=-np.infty, high=np.infty,
                                             shape=(N_CHANNELS,), dtype=np.float32)
+        self.intervalos = intervalos
+        self.tiempo = tiempo
+        self.entrenamiento = entrenamiento
 
     def reset(self):
+        self.buscado = [0 for i in range(len(self.intervalos))]
         self.done = False
-        self.buscado = [0.5, 0.5, 0.5, 0.5]
-        self.intervalos = [[1, 2], [1, 2], [10, 20], [1, 2]]
         for i in range(0, len(self.buscado)):
             self.buscado[i] = np.random.uniform(self.intervalos[i][0], self.intervalos[i][1])
-        print(self.buscado)
-        self.tiempo = np.linspace(0, 5, 200)
+        if self.entrenamiento == False:
+            print(self.buscado)
         self.delta = 0.01
 
         self.actual = [(self.intervalos[i][1] - self.intervalos[i][0]) / 2 + self.intervalos[i][0] for i in range(len(self.intervalos))]
         self.inicial = [(self.actual[i] - self.buscado[i])** 2 for i in range(len(self.intervalos))]
         self.steps = 0
         for i in range(0, len(self.actual)):
-            #self.steps += self.actual[i] * 2 / self.delta
-            self.steps = 5000
+            self.steps += self.actual[i] * 2 / self.delta
         self.variable = 0
         self.resultado = np.random.normal(Ajustar(self.buscado, self.tiempo), np.abs(Ajustar(self.buscado, self.tiempo)*0.1))
         self.observation = np.array([self.variable] + list(self.actual) + list(self.resultado))
@@ -83,7 +84,9 @@ class CustomEnv(gym.Env):
         return 0
 
 if __name__=="__main__":
-    enviroment = CustomEnv(202)
+    intervalos = [[1, 2], [1, 2], [10, 20], [1, 2]]
+    tiempo = np.linspace(0, 5, 200) # Datos en el eje x
+    enviroment = CustomEnv(205, intervalos, tiempo, False) # El número acá es la cantidad de parámetros + cantidad de puntos + 1
     enviroment.reset()
     for i in range(0, 10):
         action = int(input())
